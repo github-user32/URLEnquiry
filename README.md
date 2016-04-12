@@ -39,3 +39,8 @@ Or, if you want the raw NSURLResponse:
 				
 		NSLog("response = \(response), error = \(error)")
 	}
+	
+##Getting started
+URLEnquiry is a standalone Swift file. 
+
+Just add the [URLEnquiry.swift](URLEnquiry/URLEnquiry.swift) file to your Xcode project.
