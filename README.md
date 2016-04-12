@@ -1,8 +1,8 @@
 # URLEnquiry
 
-URLEnquiry is a standalone class to make it easy to obtain MIME type and HTTP headers from a URL, without downloading the entire URL.
+URLEnquiry is a standalone class to make it easy to obtain MIME type and HTTP headers from an NSURL or NSURLRequest, without downloading the entire URL.
 
-Internally it uses an NSURLSession to query a user-supplied URL. Once the session receives the first response from the server, the user-supplied response handler is called and the session is cancelled and invalidated.
+Internally it uses an NSURLSession to query a user-supplied NSURL or NSURLRequest. Once the session receives the first response from the server, the user-supplied response handler is called and the session is cancelled and invalidated.
 
 You do not need to keep a strong reference to an instance of URLEnquiry for the response handler to be called, as the NSURLSession maintains a strong reference to the URLEnquiry instance until the session is invalidated by the URLEnquiry.
 
@@ -39,7 +39,9 @@ Or, if you want the raw NSURLResponse:
 				
 		NSLog("response = \(response), error = \(error)")
 	}
-	
+
+There are also equivalent constructors accepting NSURLRequest objects instead of NSURLs. 
+
 ##Getting started
 URLEnquiry is a standalone Swift file. 
 

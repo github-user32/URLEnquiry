@@ -31,7 +31,11 @@ class URLEnquiryTests: XCTestCase {
 	private let invalidSchemeURL = NSURL.init(string: "hsfdttps://github.com/github-user32/URLEnquiry")
 	
 	private let defaultExpectationTimeout: NSTimeInterval = 10
-	
+}
+
+/// URL constructor tests
+extension URLEnquiryTests {
+
 	func testValidURLWithResponseCompletionHandler() {
 		let expectation = self.expectationWithDescription(#function)
 	
@@ -199,6 +203,172 @@ class URLEnquiryTests: XCTestCase {
 				expectation.fulfill()
 			})
 		}
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+}
+
+/// URL Request constructor tests
+extension URLEnquiryTests {
+
+	func testValidURLRequestWithResponseCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: validURL!)
+		
+		let _ = URLEnquiry(urlRequest: urlRequest) {
+			(response: NSURLResponse?, error: NSError?) in
+			
+			XCTAssert(response?.MIMEType == self.validURL_responseMIMEType, "Pass")
+			
+			if let httpResponse = response as? NSHTTPURLResponse {
+				XCTAssert(httpResponse.allHeaderFields.count > 0, "Pass")
+			} else {
+				XCTFail("Expected non-nil HTTP headers")
+			}
+			
+			
+			expectation.fulfill()
+		}
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testValidURLRequestWithHTTPStatusCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: validURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest) {
+			(mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) in
+			
+			XCTAssert(mimeType == self.validURL_responseMIMEType, "Pass")
+			XCTAssert(httpHeaders?.count > 0, "Pass")
+			XCTAssert(httpStatusCode == 200, "Pass")
+			XCTAssertNil(error, "Pass")
+			
+			expectation.fulfill()
+		}
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testValidURLRequestWithMinimalCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: validURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest) {
+			(mimeType: String?, httpHeaders: [NSObject : AnyObject]?) in
+			
+			XCTAssert(mimeType == self.validURL_responseMIMEType, "Pass")
+			XCTAssert(httpHeaders?.count > 0, "Pass")
+			
+			expectation.fulfill()
+		}
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testNonExistentURLRequestWithHTTPStatusCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: nonExistentURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) in
+			
+			XCTAssert(mimeType == self.nonExistentURL_responseMIMEType, "Pass")
+			XCTAssert(httpHeaders?.count > 0, "Pass")
+			XCTAssert(httpStatusCode == 404, "Pass")
+			XCTAssertNil(error, "Pass")
+			
+			expectation.fulfill()
+		})
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testNonExistentURLRequestWithMinimalCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: nonExistentURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?) in
+			
+			XCTAssertNil(mimeType, "Pass")
+			XCTAssertNil(httpHeaders, "Pass")
+			
+			expectation.fulfill()
+		})
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testInvalidSchemeURLRequestWithHTTPStatusCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: invalidSchemeURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) in
+			
+			XCTAssertNil(mimeType, "Pass")
+			XCTAssertNil(httpHeaders, "Pass")
+			XCTAssertNil(httpStatusCode, "Pass")
+			XCTAssertNotNil(error, "Pass")
+			
+			expectation.fulfill()
+		})
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testInvalidSchemeURLRequestWithMinimalCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: invalidSchemeURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?) in
+			
+			XCTAssertNil(mimeType, "Pass")
+			XCTAssertNil(httpHeaders, "Pass")
+			
+			expectation.fulfill()
+		})
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	
+	func testNonExistentHostURLRequestWithHTTPStatusCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: nonExistentHostURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) in
+			
+			XCTAssertNil(mimeType, "Pass")
+			XCTAssertNil(httpHeaders, "Pass")
+			XCTAssertNil(httpStatusCode, "Pass")
+			XCTAssertNotNil(error, "Pass")
+			
+			expectation.fulfill()
+		})
+		
+		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
+	}
+	
+	func testNonExistentHostURLRequestWithMinimalCompletionHandler() {
+		let expectation = self.expectationWithDescription(#function)
+		
+		let urlRequest = NSURLRequest.init(URL: nonExistentHostURL!)
+			
+		let _ = URLEnquiry(urlRequest: urlRequest, urlInfoHandler: { (mimeType: String?, httpHeaders: [NSObject : AnyObject]?) in
+			
+			XCTAssertNil(mimeType, "Pass")
+			XCTAssertNil(httpHeaders, "Pass")
+			
+			expectation.fulfill()
+		})
 		
 		self.waitForExpectationsWithTimeout(defaultExpectationTimeout, handler: nil)
 	}

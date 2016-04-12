@@ -21,7 +21,7 @@ class URLEnquiry: NSObject, NSURLSessionDelegate {
 	private var session: NSURLSession? = nil
 	private let completionBlock: (NSURLResponse?, NSError?) -> Void
 	
-	/// Provide the raw NSURLResponse and NSError results from connecting to the specified URL
+	/// Provide the raw NSURLResponse and NSError results from connecting to the specified URL.
 	///
 	/// If you're just after MIME type information, consider using one of the other convenience initializers.
 	init(url: NSURL, urlResponseHandler:(NSURLResponse?, NSError?) -> Void) {
@@ -30,11 +30,24 @@ class URLEnquiry: NSObject, NSURLSessionDelegate {
 		
 		super.init()
 		
-		dataTask = dataTaskWithRequest(url)
+		dataTask = dataTaskWithURL(url)
 		dataTask!.resume()
 	}
 	
-	/// Provide MIME type and HTTP header information about URL
+	/// Provide the raw NSURLResponse and NSError results from connecting with the specified URL request.
+	///
+	/// If you're just after MIME type information, consider using one of the other convenience initializers.
+	init(urlRequest: NSURLRequest, urlResponseHandler:(NSURLResponse?, NSError?) -> Void) {
+		
+		completionBlock = urlResponseHandler
+		
+		super.init()
+		
+		dataTask = dataTaskWithRequest(urlRequest)
+		dataTask!.resume()
+	}
+	
+	/// Provide MIME type and HTTP header information for URL.
 	///
 	/// Note: MIME type and header information may still be provided even in the even of an HTTP error such as 404!
 	convenience init(url: NSURL, urlInfoHandler:(mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) -> Void) {
@@ -55,10 +68,55 @@ class URLEnquiry: NSObject, NSURLSessionDelegate {
 		}
 	}
 	
-	/// Provide MIME type and HTTP header information about URL only if there were no errors and the HTTP response status code was in the success range 2xx.
+	/// Provide MIME type and HTTP header information for URL request.
+	///
+	/// Note: MIME type and header information may still be provided even in the even of an HTTP error such as 404!
+	convenience init(urlRequest: NSURLRequest, urlInfoHandler:(mimeType: String?, httpHeaders: [NSObject : AnyObject]?, httpStatusCode: Int?, error: NSError?) -> Void) {
+		
+		self.init(urlRequest: urlRequest) { (response: NSURLResponse?, error: NSError?) in
+			
+			var mimeType: String? = nil
+			var headers: [NSObject : AnyObject]? = nil
+			var httpStatusCode: Int? = nil
+			
+			if (error == nil) {
+				mimeType = response?.MIMEType
+				headers = (response as? NSHTTPURLResponse)?.allHeaderFields
+				httpStatusCode = (response as? NSHTTPURLResponse)?.statusCode
+			}
+			
+			urlInfoHandler(mimeType: mimeType, httpHeaders: headers, httpStatusCode: httpStatusCode, error: error)
+		}
+	}
+	
+	/// Provide MIME type and HTTP header information for URL only if there were no errors and the HTTP response status code was in the success range 2xx.
 	convenience init(url: NSURL, urlInfoHandler:(mimeType: String?, httpHeaders: [NSObject : AnyObject]?) -> Void) {
 		
 		self.init(url: url) { (response: NSURLResponse?, error: NSError?) in
+			
+			var mimeType: String? = nil
+			var headers: [NSObject : AnyObject]? = nil
+			
+			if (error == nil) {
+				if let httpStatusCode = (response as? NSHTTPURLResponse)?.statusCode {
+					
+					// Based on https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+					if httpStatusCode >= 200 && httpStatusCode < 300 {
+						
+						mimeType = response?.MIMEType
+						headers = (response as? NSHTTPURLResponse)?.allHeaderFields
+					}
+				}
+			}
+			
+			urlInfoHandler(mimeType: mimeType, httpHeaders: headers)
+		}
+	}
+	
+	/// Provide MIME type and HTTP header information for URL request only if there were no errors and the HTTP response status code was in the success range 2xx.
+	convenience init(urlRequest: NSURLRequest, urlInfoHandler:(mimeType: String?, httpHeaders: [NSObject : AnyObject]?) -> Void) {
+		
+		self.init(urlRequest: urlRequest) { (response: NSURLResponse?, error: NSError?) in
 			
 			var mimeType: String? = nil
 			var headers: [NSObject : AnyObject]? = nil
@@ -88,11 +146,22 @@ class URLEnquiry: NSObject, NSURLSessionDelegate {
 		return NSURLSessionConfiguration.ephemeralSessionConfiguration()
 	}
 	
-	private func dataTaskWithRequest(url: NSURL) -> NSURLSessionDataTask
-	{
+	private func createSession() {
 		session = NSURLSession.init(configuration: sessionConfiguration(), delegate: self, delegateQueue: NSOperationQueue.mainQueue())
+	}
+	
+	private func dataTaskWithURL(url: NSURL) -> NSURLSessionDataTask
+	{
+		createSession()
 		
 		return session!.dataTaskWithURL(url)
+	}
+	
+	private func dataTaskWithRequest(urlRequest: NSURLRequest) -> NSURLSessionDataTask
+	{
+		createSession()
+		
+		return session!.dataTaskWithRequest(urlRequest)
 	}
 	
 	//MARK: NSURLSessionDelegate methods
